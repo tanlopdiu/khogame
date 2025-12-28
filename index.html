@@ -119,13 +119,13 @@
             let type;
             if (obstacles.length === 0) {
                 canSpawn = true;
-                type = Math.random() < 0.7 ? 'cactus' : 'bird';
+                type = Math.random() < 0.9 ? 'cactus' : 'bird'; // 90% cactus, 10% bird
             } else {
                 let lastObstacle = obstacles[obstacles.length - 1];
                 let minDistance = 150; // Khoảng cách tối thiểu chung
                 if (lastObstacle.x < canvas.width - minDistance) {
                     canSpawn = true;
-                    type = Math.random() < 0.7 ? 'cactus' : 'bird';
+                    type = Math.random() < 0.9 ? 'cactus' : 'bird'; // 90% cactus, 10% bird
                 }
             }
 
