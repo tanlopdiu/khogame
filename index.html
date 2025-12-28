@@ -79,13 +79,16 @@ let score = 0;
 let gameRunning = false;
 let gameOver = false;
 
-// Nhảy & rơi nhanh
+// Nhảy & rơi nhanh (đã ổn định)
 let gravity = 0.8;
 let jumpStrength = -14;
 
+// ===== TỐC ĐỘ (GIẢM GIA TỐC) =====
 let obstacleSpeed = 5;
 let maxSpeed = 11;
 let speedCounter = 0;
+const SPEED_UP_INTERVAL = 90;   // trước: 60 → nay chậm hơn
+const SPEED_UP_AMOUNT = 0.07;   // trước: ~0.12
 
 // Delay cactus 3s
 let cactusDelayCounter = 0;
@@ -95,7 +98,6 @@ const CACTUS_DELAY = 180;
 const SAFE_MIN_DISTANCE = 220;
 const SAFE_MAX_DISTANCE = 400;
 
-// ===== RANDOM DISTANCE =====
 function randomSafeDistance() {
     return SAFE_MIN_DISTANCE +
         Math.random() * (SAFE_MAX_DISTANCE - SAFE_MIN_DISTANCE);
@@ -145,7 +147,7 @@ function spawnCactus() {
         height: 40
     });
 
-    // ❗ CHỈ TRƯỜNG HỢP NÀY mới spawn 2 cây sát nhau
+    // combo 2 cây (kỹ năng)
     if (Math.random() < 0.25) {
         obstacles.push({
             x: canvas.width + 35,
@@ -208,12 +210,14 @@ function gameLoop() {
     updateObstacles();
     checkCollision();
 
-    score++;
-    scoreDiv.textContent = "Điểm: " + Math.floor(score / 10);
+    // ⭐ ĐIỂM +1.5
+    score += 1.5;
+    scoreDiv.textContent = "Điểm: " + Math.floor(score);
 
+    // Tăng tốc chậm hơn
     speedCounter++;
-    if (speedCounter >= 60 && obstacleSpeed < maxSpeed) {
-        obstacleSpeed += 0.12;
+    if (speedCounter >= SPEED_UP_INTERVAL && obstacleSpeed < maxSpeed) {
+        obstacleSpeed += SPEED_UP_AMOUNT;
         speedCounter = 0;
     }
 
