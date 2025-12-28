@@ -68,6 +68,8 @@
         let gravity = 0.6;
         let jumpStrength = -12;
         let lastCactusX = -1000; // Vị trí x của cây xương rồng cuối cùng
+        let birdSpawnTimer = 0; // Bộ đếm thời gian để spawn chim
+        let nextBirdSpawn = 300 + Math.random() * 180; // Thời gian spawn chim tiếp theo (300-480 frame, khoảng 5-8 giây ở 60fps)
 
         // Vẽ khủng long
         function drawDino() {
@@ -116,30 +118,31 @@
 
             // Thêm chướng ngại vật mới
             let canSpawn = false;
-            let type;
+            let type = 'cactus'; // Mặc định là cactus
             if (obstacles.length === 0) {
                 canSpawn = true;
-                type = Math.random() < 0.9 ? 'cactus' : 'bird'; // 90% cactus, 10% bird
             } else {
                 let lastObstacle = obstacles[obstacles.length - 1];
                 let minDistance = 150; // Khoảng cách tối thiểu chung
                 if (lastObstacle.x < canvas.width - minDistance) {
                     canSpawn = true;
-                    type = Math.random() < 0.9 ? 'cactus' : 'bird'; // 90% cactus, 10% bird
                 }
             }
 
             if (canSpawn) {
                 let newObstacle;
-                if (type === 'cactus') {
-                    // Khoảng cách ngẫu nhiên cho xương rồng
-                    let cactusMinDistance = 200 + Math.random() * 300; // Ngẫu nhiên từ 200-500 pixel
-                    if (canvas.width - lastCactusX >= cactusMinDistance) {
-                        newObstacle = { x: canvas.width, y: 150, width: 20, height: 40, type: 'cactus' };
-                        lastCactusX = canvas.width;
-                    }
-                } else {
-                    newObstacle = { x: canvas.width, y: 140 + Math.random() * 30, width: 30, height: 20, type: 'bird' }; // Chim bay ở độ cao 140-170 để buộc nhảy hoặc cúi
+                // Spawn cactus với khoảng cách ngẫu nhiên
+                let cactusMinDistance = 200 + Math.random() * 300; // Ngẫu nhiên từ 200-500 pixel
+                if (canvas.width - lastCactusX >= cactusMinDistance) {
+                    newObstacle = { x: canvas.width, y: 150, width: 20, height: 40, type: 'cactus' };
+                    lastCactusX = canvas.width;
+                }
+                // Spawn chim nếu đủ điều kiện
+                birdSpawnTimer++;
+                if (birdSpawnTimer >= nextBirdSpawn && Math.floor(score / 10) >= 1000) { // Chim chỉ xuất hiện khi điểm >= 1000
+                    newObstacle = { x: canvas.width, y: 140 + Math.random() * 30, width: 30, height: 20, type: 'bird' };
+                    birdSpawnTimer = 0;
+                    nextBirdSpawn = 300 + Math.random() * 180; // Reset timer cho chim tiếp theo
                 }
                 if (newObstacle) {
                     obstacles.push(newObstacle);
@@ -225,6 +228,8 @@
             obstacleSpeed = 5; // Reset tốc độ
             speedIncreaseCounter = 0; // Reset bộ đếm
             lastCactusX = -1000; // Reset vị trí xương rồng
+            birdSpawnTimer = 0; // Reset timer chim
+            nextBirdSpawn = 300 + Math.random() * 180; // Reset timer chim
             startCountdown();
         });
 
@@ -250,6 +255,8 @@
                     obstacleSpeed = 5; // Reset tốc độ
                     speedIncreaseCounter = 0; // Reset bộ đếm
                     lastCactusX = -1000; // Reset vị trí xương rồng
+                    birdSpawnTimer = 0; // Reset timer chim
+                    nextBirdSpawn = 300 + Math.random() * 180; // Reset timer chim
                     startCountdown();
                 }
             } else if (e.code === 'ArrowDown') {
