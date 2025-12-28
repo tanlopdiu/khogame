@@ -79,22 +79,22 @@ let score = 0;
 let gameRunning = false;
 let gameOver = false;
 
-// Nhảy & rơi nhanh (đã ổn định)
+// Physics
 let gravity = 0.8;
 let jumpStrength = -14;
 
-// ===== TỐC ĐỘ (GIẢM GIA TỐC) =====
+// Speed (tăng chậm)
 let obstacleSpeed = 5;
 let maxSpeed = 11;
 let speedCounter = 0;
-const SPEED_UP_INTERVAL = 90;   // trước: 60 → nay chậm hơn
-const SPEED_UP_AMOUNT = 0.07;   // trước: ~0.12
+const SPEED_UP_INTERVAL = 90;
+const SPEED_UP_AMOUNT = 0.07;
 
-// Delay cactus 3s
+// Delay cactus
 let cactusDelayCounter = 0;
 const CACTUS_DELAY = 180;
 
-// ===== KHOẢNG CÁCH AN TOÀN =====
+// ===== SAFE DISTANCE =====
 const SAFE_MIN_DISTANCE = 220;
 const SAFE_MAX_DISTANCE = 400;
 
@@ -114,8 +114,12 @@ function drawDino() {
 }
 
 function drawObstacles() {
-    ctx.fillStyle = "red";
     obstacles.forEach(o => {
+        if (o.type === "cactus") {
+            ctx.fillStyle = "red";
+        } else {
+            ctx.fillStyle = "blue";
+        }
         ctx.fillRect(o.x, o.y, o.width, o.height);
     });
 }
@@ -130,7 +134,6 @@ function updateDino() {
     if (dino.jumping) {
         dino.dy += gravity;
         dino.y += dino.dy;
-
         if (dino.y >= 150) {
             dino.y = 150;
             dino.dy = 0;
@@ -141,6 +144,7 @@ function updateDino() {
 
 function spawnCactus() {
     obstacles.push({
+        type: "cactus",
         x: canvas.width,
         y: 150,
         width: 20,
@@ -150,6 +154,7 @@ function spawnCactus() {
     // combo 2 cây (kỹ năng)
     if (Math.random() < 0.25) {
         obstacles.push({
+            type: "cactus",
             x: canvas.width + 35,
             y: 150,
             width: 20,
@@ -160,6 +165,16 @@ function spawnCactus() {
     nextCactusDistance = randomSafeDistance();
 }
 
+function spawnBird() {
+    obstacles.push({
+        type: "bird",
+        x: canvas.width,
+        y: 120 + Math.random() * 30, // cao/thấp khác nhau
+        width: 30,
+        height: 20
+    });
+}
+
 function updateObstacles() {
     cactusDelayCounter++;
 
@@ -168,12 +183,21 @@ function updateObstacles() {
 
     if (cactusDelayCounter < CACTUS_DELAY) return;
 
+    // ===== Cactus =====
     if (obstacles.length === 0) {
         spawnCactus();
     } else {
         let last = obstacles[obstacles.length - 1];
         if (canvas.width - last.x >= nextCactusDistance) {
             spawnCactus();
+        }
+    }
+
+    // ===== Bird (3500 - 4000 điểm trở lên) =====
+    if (score >= 3500) {
+        let birdChance = score < 4000 ? 0.005 : 0.01;
+        if (Math.random() < birdChance) {
+            spawnBird();
         }
     }
 }
@@ -210,11 +234,10 @@ function gameLoop() {
     updateObstacles();
     checkCollision();
 
-    // ⭐ ĐIỂM +1.5
+    // ⭐ điểm x1.5
     score += 1.5;
     scoreDiv.textContent = "Điểm: " + Math.floor(score);
 
-    // Tăng tốc chậm hơn
     speedCounter++;
     if (speedCounter >= SPEED_UP_INTERVAL && obstacleSpeed < maxSpeed) {
         obstacleSpeed += SPEED_UP_AMOUNT;
