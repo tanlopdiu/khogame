@@ -67,6 +67,7 @@
         let speedIncreaseCounter = 0; // Bộ đếm để tăng tốc độ
         let gravity = 0.6;
         let jumpStrength = -12;
+        let lastCactusX = -1000; // Vị trí x của cây xương rồng cuối cùng
 
         // Vẽ khủng long
         function drawDino() {
@@ -113,17 +114,36 @@
             });
             obstacles = obstacles.filter(obstacle => obstacle.x > -obstacle.width);
 
-            // Thêm chướng ngại vật mới với khoảng cách ngẫu nhiên
-            let minDistance = 200 + Math.random() * 200; // Khoảng cách ngẫu nhiên từ 200-400 pixel
-            if (obstacles.length === 0 || obstacles[obstacles.length - 1].x < canvas.width - minDistance) {
-                let type = Math.random() < 0.7 ? 'cactus' : 'bird'; // 70% cactus, 30% bird
+            // Thêm chướng ngại vật mới
+            let canSpawn = false;
+            let type;
+            if (obstacles.length === 0) {
+                canSpawn = true;
+                type = Math.random() < 0.7 ? 'cactus' : 'bird';
+            } else {
+                let lastObstacle = obstacles[obstacles.length - 1];
+                let minDistance = 150; // Khoảng cách tối thiểu chung
+                if (lastObstacle.x < canvas.width - minDistance) {
+                    canSpawn = true;
+                    type = Math.random() < 0.7 ? 'cactus' : 'bird';
+                }
+            }
+
+            if (canSpawn) {
                 let newObstacle;
                 if (type === 'cactus') {
-                    newObstacle = { x: canvas.width, y: 150, width: 20, height: 40, type: 'cactus' };
+                    // Khoảng cách ngẫu nhiên cho xương rồng
+                    let cactusMinDistance = 200 + Math.random() * 300; // Ngẫu nhiên từ 200-500 pixel
+                    if (canvas.width - lastCactusX >= cactusMinDistance) {
+                        newObstacle = { x: canvas.width, y: 150, width: 20, height: 40, type: 'cactus' };
+                        lastCactusX = canvas.width;
+                    }
                 } else {
-                    newObstacle = { x: canvas.width, y: 120 + Math.random() * 30, width: 30, height: 20, type: 'bird' }; // Chim bay ở độ cao 120-150 để buộc cúi đầu
+                    newObstacle = { x: canvas.width, y: 140 + Math.random() * 30, width: 30, height: 20, type: 'bird' }; // Chim bay ở độ cao 140-170 để buộc nhảy hoặc cúi
                 }
-                obstacles.push(newObstacle);
+                if (newObstacle) {
+                    obstacles.push(newObstacle);
+                }
             }
         }
 
@@ -204,6 +224,7 @@
             gameOver = false;
             obstacleSpeed = 5; // Reset tốc độ
             speedIncreaseCounter = 0; // Reset bộ đếm
+            lastCactusX = -1000; // Reset vị trí xương rồng
             startCountdown();
         });
 
@@ -228,6 +249,7 @@
                     gameOver = false;
                     obstacleSpeed = 5; // Reset tốc độ
                     speedIncreaseCounter = 0; // Reset bộ đếm
+                    lastCactusX = -1000; // Reset vị trí xương rồng
                     startCountdown();
                 }
             } else if (e.code === 'ArrowDown') {
