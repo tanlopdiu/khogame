@@ -79,23 +79,33 @@ let score = 0;
 let gameRunning = false;
 let gameOver = false;
 
-let gravity = 0.6;
-let jumpStrength = -12;
+// 🔥 Nhảy & rơi nhanh hơn
+let gravity = 0.8;        // tăng từ 0.6
+let jumpStrength = -14;   // mạnh hơn
 
 let obstacleSpeed = 5;
-let maxSpeed = 10;
+let maxSpeed = 11;
 let speedCounter = 0;
 
 // Delay cactus 3s
 let cactusDelayCounter = 0;
-const CACTUS_DELAY = 180; // 3 giây (60fps)
+const CACTUS_DELAY = 180;
 
-// Random distance
+// Khoảng cách spawn
 let nextCactusDistance = randomCactusDistance();
 
-// ===== RANDOM DISTANCE =====
+// ===== RANDOM MẬT ĐỘ =====
 function randomCactusDistance() {
-    return 150 + Math.random() * 200; // 150 - 350px
+    let r = Math.random();
+
+    // 30% dày, 40% vừa, 30% thưa
+    if (r < 0.3) {
+        return 100 + Math.random() * 80;   // rất gần
+    } else if (r < 0.7) {
+        return 180 + Math.random() * 150;  // bình thường
+    } else {
+        return 350 + Math.random() * 250;  // rất xa
+    }
 }
 
 // ===== DRAW =====
@@ -123,6 +133,7 @@ function updateDino() {
     if (dino.jumping) {
         dino.dy += gravity;
         dino.y += dino.dy;
+
         if (dino.y >= 150) {
             dino.y = 150;
             dino.dy = 0;
@@ -138,6 +149,17 @@ function spawnCactus() {
         width: 20,
         height: 40
     });
+
+    // 20% spawn 2 cây gần nhau (đột ngột khó)
+    if (Math.random() < 0.2) {
+        obstacles.push({
+            x: canvas.width + 35,
+            y: 150,
+            width: 20,
+            height: 40
+        });
+    }
+
     nextCactusDistance = randomCactusDistance();
 }
 
@@ -196,7 +218,7 @@ function gameLoop() {
 
     speedCounter++;
     if (speedCounter >= 60 && obstacleSpeed < maxSpeed) {
-        obstacleSpeed += 0.1;
+        obstacleSpeed += 0.12;
         speedCounter = 0;
     }
 
