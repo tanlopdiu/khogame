@@ -57,7 +57,7 @@
         const gameOverDiv = document.getElementById('gameOver');
         const countdownDiv = document.getElementById('countdown');
 
-        let dino = { x: 50, y: 150, width: 40, height: 40, dy: 0, jumping: false };
+        let dino = { x: 50, y: 150, width: 40, height: 40, dy: 0, jumping: false, ducked: false };
         let obstacles = [];
         let score = 0;
         let gameRunning = false;
@@ -65,18 +65,30 @@
         let obstacleSpeed = 5;
         let gravity = 0.6;
         let jumpStrength = -12;
+        let lastObstacleX = canvas.width; // Vị trí x của chướng ngại vật cuối cùng
 
         // Vẽ khủng long
         function drawDino() {
             ctx.fillStyle = 'green';
-            ctx.fillRect(dino.x, dino.y, dino.width, dino.height);
+            let drawHeight = dino.height;
+            let drawY = dino.y;
+            if (dino.ducked) {
+                drawHeight = 20; // Giảm chiều cao khi cúi
+                drawY = dino.y + 20;
+            }
+            ctx.fillRect(dino.x, drawY, dino.width, drawHeight);
         }
 
-        // Vẽ xương rồng
+        // Vẽ chướng ngại vật
         function drawObstacles() {
-            ctx.fillStyle = 'red';
             obstacles.forEach(obstacle => {
-                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                if (obstacle.type === 'cactus') {
+                    ctx.fillStyle = 'red';
+                    ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                } else if (obstacle.type === 'bird') {
+                    ctx.fillStyle = 'blue';
+                    ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                }
             });
         }
 
@@ -93,26 +105,37 @@
             }
         }
 
-        // Cập nhật xương rồng
+        // Cập nhật chướng ngại vật
         function updateObstacles() {
             obstacles.forEach(obstacle => {
                 obstacle.x -= obstacleSpeed;
             });
             obstacles = obstacles.filter(obstacle => obstacle.x > -obstacle.width);
 
-            // Thêm xương rồng mới
-            if (Math.random() < 0.01) {
-                obstacles.push({ x: canvas.width, y: 150, width: 20, height: 40 });
+            // Thêm chướng ngại vật mới với khoảng cách tối thiểu
+            if (lastObstacleX <= canvas.width - 250) { // Khoảng cách tối thiểu 250px để có thể nhảy qua
+                let type = Math.random() < 0.7 ? 'cactus' : 'bird'; // 70% cactus, 30% bird
+                let newObstacle;
+                if (type === 'cactus') {
+                    newObstacle = { x: canvas.width, y: 150, width: 20, height: 40, type: 'cactus' };
+                } else {
+                    newObstacle = { x: canvas.width, y: 100 + Math.random() * 30, width: 30, height: 20, type: 'bird' }; // Chim bay ở độ cao 100-130
+                }
+                obstacles.push(newObstacle);
+                lastObstacleX = canvas.width;
             }
+            lastObstacleX -= obstacleSpeed;
         }
 
         // Kiểm tra va chạm
         function checkCollision() {
             obstacles.forEach(obstacle => {
+                let dinoHeight = dino.ducked ? 20 : dino.height;
+                let dinoY = dino.ducked ? dino.y + 20 : dino.y;
                 if (dino.x < obstacle.x + obstacle.width &&
                     dino.x + dino.width > obstacle.x &&
-                    dino.y < obstacle.y + obstacle.height &&
-                    dino.y + dino.height > obstacle.y) {
+                    dinoY < obstacle.y + obstacle.height &&
+                    dinoY + dinoHeight > obstacle.y) {
                     gameOver = true;
                     gameRunning = false;
                     gameOverDiv.style.display = 'block';
@@ -168,9 +191,11 @@
             dino.y = 150;
             dino.dy = 0;
             dino.jumping = false;
+            dino.ducked = false;
             obstacles = [];
             score = 0;
             gameOver = false;
+            lastObstacleX = canvas.width;
             startCountdown();
         });
 
@@ -178,7 +203,7 @@
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
-                if (gameRunning && !dino.jumping) {
+                if (gameRunning && !dino.jumping && !dino.ducked) {
                     // Nhảy nếu game đang chạy
                     dino.jumping = true;
                     dino.dy = jumpStrength;
@@ -189,11 +214,24 @@
                     dino.y = 150;
                     dino.dy = 0;
                     dino.jumping = false;
+                    dino.ducked = false;
                     obstacles = [];
                     score = 0;
                     gameOver = false;
+                    lastObstacleX = canvas.width;
                     startCountdown();
                 }
+            } else if (e.code === 'ArrowDown') {
+                e.preventDefault();
+                if (gameRunning && !dino.jumping) {
+                    dino.ducked = true;
+                }
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.code === 'ArrowDown') {
+                dino.ducked = false;
             }
         });
     </script>
