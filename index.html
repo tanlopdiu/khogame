@@ -1,21 +1,21 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Khủng Long</title>
-    <style>
-        body { margin:0; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#f0f0f0; font-family:Arial,sans-serif;}
-        canvas { border:2px solid black; background:#fff;}
-        #startButton { padding:10px 20px; font-size:18px; margin-bottom:10px; cursor:pointer;}
-        #score { font-size:22px; margin:5px;}
-        #countdown { font-size:48px; color:blue; margin:10px; display:none;}
-        #gameOver { font-size:24px; color:red; margin:10px; display:none;}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Khủng Long Hình Ảnh</title>
+<style>
+body { margin:0; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#f0f0f0; font-family:Arial,sans-serif;}
+canvas { border:2px solid black; }
+#startButton { padding:10px 20px; font-size:18px; margin-bottom:10px; cursor:pointer;}
+#score { font-size:22px; margin:5px;}
+#countdown { font-size:48px; color:blue; margin:10px; display:none;}
+#gameOver { font-size:24px; color:red; margin:10px; display:none;}
+</style>
 </head>
 <body>
 
-<h2>Game Khủng Long Cổ Điển</h2>
+<h2>Game Khủng Long Hình Ảnh</h2>
 <button id="startButton">Bắt đầu</button>
 <div id="countdown"></div>
 <div id="score">Điểm: 0</div>
@@ -32,74 +32,72 @@ const scoreDiv = document.getElementById("score");
 const countdownDiv = document.getElementById("countdown");
 const gameOverDiv = document.getElementById("gameOver");
 
-// ===== BACKGROUND =====
-const backgroundImg = new Image();
-backgroundImg.src = "anhnen.jpg"; // ảnh nền
+// ===== IMAGES =====
+const bgImg = new Image();
+bgImg.src = "anhnen.jpg";
+
+const groundImg = new Image();
+groundImg.src = "dat.jpg";
+
+const dinoImg = new Image();
+dinoImg.src = "khunglong.jpg";
+
+const cactusImg = new Image();
+cactusImg.src = "xuongrong.jpg";
+
+const birdImg = new Image();
+birdImg.src = "chim.jpg";
+
+// ===== VARIABLES =====
 let bgX = 0;
-
-// ===== DINO =====
 let dino = { x:50, y:150, width:40, height:40, dy:0, jumping:false, ducked:false };
-
-// ===== GAME VARS =====
 let obstacles = [];
 let score = 0;
 let gameRunning = false;
 let gameOver = false;
 
-// Physics
 let gravity = 0.8;
 let jumpStrength = -14;
 
-// Speed
 let obstacleSpeed = 5;
 let maxSpeed = 11;
 let speedCounter = 0;
 const SPEED_UP_INTERVAL = 90;
 const SPEED_UP_AMOUNT = 0.07;
 
-// Delay cactus
 let cactusDelayCounter = 0;
 const CACTUS_DELAY = 180;
 
-// SAFE DISTANCE
 const SAFE_MIN_DISTANCE = 220;
 const SAFE_MAX_DISTANCE = 400;
-
-function randomSafeDistance() {
-    return SAFE_MIN_DISTANCE + Math.random()*(SAFE_MAX_DISTANCE-SAFE_MIN_DISTANCE);
-}
-
+function randomSafeDistance(){ return SAFE_MIN_DISTANCE + Math.random()*(SAFE_MAX_DISTANCE-SAFE_MIN_DISTANCE); }
 let nextCactusDistance = randomSafeDistance();
 
 // ===== DRAW =====
 function drawBackground(){
-    ctx.drawImage(backgroundImg, -bgX, 0, canvas.width, canvas.height);
-    ctx.drawImage(backgroundImg, canvas.width - bgX, 0, canvas.width, canvas.height);
-    bgX += 1; // tốc độ di chuyển của background
-    if(bgX >= canvas.width) bgX = 0;
+    ctx.drawImage(bgImg,0,0,canvas.width,canvas.height);
+    // Vẽ ground parallax
+    ctx.drawImage(groundImg,-bgX,150,canvas.width,50);
+    ctx.drawImage(groundImg,canvas.width-bgX,150,canvas.width,50);
+    bgX += 1;
+    if(bgX >= canvas.width) bgX=0;
 }
 
-function drawDino() {
-    ctx.fillStyle = "green";
-    let h = dino.ducked ? 20 : dino.height;
-    let y = dino.ducked ? dino.y + 20 : dino.y;
-    ctx.fillRect(dino.x, y, dino.width, h);
+function drawDino(){
+    let h = dino.ducked?20:dino.height;
+    let y = dino.ducked?dino.y+20:dino.y;
+    ctx.drawImage(dinoImg,dino.x,y,dino.width,h);
 }
 
-function drawObstacles() {
-    obstacles.forEach(o => {
-        ctx.fillStyle = o.type==="cactus"?"red":"blue";
-        ctx.fillRect(o.x, o.y, o.width, o.height);
+function drawObstacles(){
+    obstacles.forEach(o=>{
+        if(o.type==="cactus") ctx.drawImage(cactusImg,o.x,o.y,o.width,o.height);
+        else ctx.drawImage(birdImg,o.x,o.y,o.width,o.height);
     });
 }
 
-function drawGround() {
-    ctx.fillStyle="black";
-    ctx.fillRect(0,190,canvas.width,10);
-}
-
 // ===== UPDATE =====
-function updateDino() {
+function updateDino(){
     if(dino.jumping){
         dino.dy += gravity;
         dino.y += dino.dy;
@@ -107,22 +105,16 @@ function updateDino() {
     }
 }
 
-function spawnCactus() {
+function spawnCactus(){
     obstacles.push({type:"cactus", x:canvas.width, y:150, width:20, height:40});
-    // combo 2 cây
     if(Math.random()<0.25) obstacles.push({type:"cactus", x:canvas.width+35, y:150, width:20, height:40});
     nextCactusDistance = randomSafeDistance();
 }
 
-function spawnBird() {
-    // Kiểm tra khoảng cách an toàn với cactus gần nhất
-    let safe = true;
+function spawnBird(){
+    let safe=true;
     obstacles.forEach(o=>{
-        if(o.type==="cactus"){
-            if(Math.abs((canvas.width) - o.x) < SAFE_MIN_DISTANCE){
-                safe=false;
-            }
-        }
+        if(o.type==="cactus" && Math.abs(canvas.width-o.x)<SAFE_MIN_DISTANCE) safe=false;
     });
     if(!safe) return;
     obstacles.push({type:"bird", x:canvas.width, y:120+Math.random()*30, width:30, height:20});
@@ -135,16 +127,14 @@ function updateObstacles(){
 
     if(cactusDelayCounter<CACTUS_DELAY) return;
 
-    // Cactus
-    if(obstacles.length===0){ spawnCactus(); }
+    if(obstacles.length===0) spawnCactus();
     else{
-        let last = obstacles[obstacles.length-1];
-        if(canvas.width - last.x >= nextCactusDistance) spawnCactus();
+        let last=obstacles[obstacles.length-1];
+        if(canvas.width-last.x>=nextCactusDistance) spawnCactus();
     }
 
-    // Bird (3500 -> 4000+, xuất hiện thưa)
     if(score>=3500){
-        let birdChance = score<4000 ? 0.001 : 0.002; // giảm 5 lần
+        let birdChance = score<4000?0.001:0.002;
         if(Math.random()<birdChance) spawnBird();
     }
 }
@@ -165,22 +155,20 @@ function checkCollision(){
 function gameLoop(){
     if(!gameRunning) return;
 
-    drawBackground(); // background
-    drawGround();
+    drawBackground();
     drawDino();
     drawObstacles();
     updateDino();
     updateObstacles();
     checkCollision();
 
-    score+=1.5;
+    score += 1.5;
     scoreDiv.textContent="Điểm: "+Math.floor(score);
 
-    // Tăng tốc chậm, dừng sau 7000 điểm
     if(score<7000){
         speedCounter++;
         if(speedCounter>=SPEED_UP_INTERVAL && obstacleSpeed<maxSpeed){
-            obstacleSpeed+=SPEED_UP_AMOUNT;
+            obstacleSpeed += SPEED_UP_AMOUNT;
             speedCounter=0;
         }
     }
