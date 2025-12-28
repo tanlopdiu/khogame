@@ -14,7 +14,7 @@ body {
     justify-content: center;
     font-family: Arial, sans-serif;
     background: url('anhnen.jpg') no-repeat center center;
-    background-size: cover; /* phủ toàn trang */
+    background-size: cover;
 }
 canvas {
     border: 2px solid black;
@@ -51,7 +51,7 @@ canvas {
 <div id="score">Điểm: 0</div>
 <div id="gameOver">Game Over! Nhấn Space để chơi lại</div>
 
-<canvas id="gameCanvas" width="800" height="200"></canvas>
+<canvas id="gameCanvas" width="1200" height="300"></canvas>
 
 <script>
 const canvas = document.getElementById("gameCanvas");
@@ -77,7 +77,7 @@ birdImg.src = "chim.jpg";
 
 // ===== VARIABLES =====
 let bgX = 0;
-let dino = { x:50, y:150, width:40, height:40, dy:0, jumping:false, ducked:false };
+let dino = { x:50, y:220, width:40, height:40, dy:0, jumping:false, ducked:false };
 let obstacles = [];
 let score = 0;
 let gameRunning = false;
@@ -102,7 +102,6 @@ let nextCactusDistance = randomSafeDistance();
 
 // ===== DRAW =====
 function drawBackground(){
-    // vẽ parallax + mặt đất
     ctx.drawImage(groundImg, -bgX, 0, canvas.width, canvas.height);
     ctx.drawImage(groundImg, canvas.width - bgX, 0, canvas.width, canvas.height);
     bgX += 1;
@@ -112,13 +111,15 @@ function drawBackground(){
 function drawDino(){
     let h = dino.ducked?20:dino.height;
     let y = dino.ducked?dino.y+20:dino.y;
-    ctx.drawImage(dinoImg, dino.x, y, dino.width, h);
+    ctx.drawImage(dinoImg, dino.x, y, dino.width*1.5, h*1.5);
 }
 
 function drawObstacles(){
     obstacles.forEach(o=>{
-        if(o.type==="cactus") ctx.drawImage(cactusImg, o.x, o.y, o.width, o.height);
-        else ctx.drawImage(birdImg, o.x, o.y, o.width, o.height);
+        if(o.type==="cactus") 
+            ctx.drawImage(cactusImg, o.x, o.y, o.width*1.5, o.height*1.5);
+        else 
+            ctx.drawImage(birdImg, o.x, o.y, o.width, o.height);
     });
 }
 
@@ -127,13 +128,13 @@ function updateDino(){
     if(dino.jumping){
         dino.dy += gravity;
         dino.y += dino.dy;
-        if(dino.y>=150){ dino.y=150; dino.dy=0; dino.jumping=false; }
+        if(dino.y>=220){ dino.y=220; dino.dy=0; dino.jumping=false; }
     }
 }
 
 function spawnCactus(){
-    obstacles.push({type:"cactus", x:canvas.width, y:150, width:20, height:40});
-    if(Math.random()<0.25) obstacles.push({type:"cactus", x:canvas.width+35, y:150, width:20, height:40});
+    obstacles.push({type:"cactus", x:canvas.width, y:220, width:20, height:40});
+    if(Math.random()<0.25) obstacles.push({type:"cactus", x:canvas.width+35, y:220, width:20, height:40});
     nextCactusDistance = randomSafeDistance();
 }
 
@@ -143,7 +144,7 @@ function spawnBird(){
         if(o.type==="cactus" && Math.abs(canvas.width-o.x)<SAFE_MIN_DISTANCE) safe=false;
     });
     if(!safe) return;
-    obstacles.push({type:"bird", x:canvas.width, y:120+Math.random()*30, width:30, height:20});
+    obstacles.push({type:"bird", x:canvas.width, y:180+Math.random()*30, width:30, height:20});
 }
 
 function updateObstacles(){
@@ -228,7 +229,7 @@ function resetGame(){
     cactusDelayCounter=0;
     nextCactusDistance=randomSafeDistance();
 
-    dino.y=150; dino.dy=0; dino.jumping=false; dino.ducked=false;
+    dino.y=220; dino.dy=0; dino.jumping=false; dino.ducked=false;
 
     gameOver=false;
     gameOverDiv.style.display="none";
