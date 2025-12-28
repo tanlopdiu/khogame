@@ -3,275 +3,273 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Khủng Long Cổ Điển</title>
+    <title>Game Khủng Long</title>
     <style>
         body {
+            margin: 0;
+            height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
+            background: #f0f0f0;
             font-family: Arial, sans-serif;
         }
         canvas {
-            border: 2px solid #000;
-            background-color: #fff;
+            background: white;
+            border: 2px solid black;
         }
         #startButton {
-            margin: 20px;
             padding: 10px 20px;
             font-size: 18px;
+            margin-bottom: 10px;
             cursor: pointer;
         }
         #score {
-            font-size: 24px;
-            margin: 10px;
-        }
-        #gameOver {
-            font-size: 24px;
-            color: red;
-            margin: 10px;
+            font-size: 22px;
+            margin: 5px;
         }
         #countdown {
             font-size: 48px;
             color: blue;
             margin: 10px;
+            display: none;
+        }
+        #gameOver {
+            font-size: 24px;
+            color: red;
+            margin: 10px;
+            display: none;
         }
     </style>
 </head>
 <body>
-    <h1>Game Khủng Long Cổ Điển</h1>
-    <button id="startButton">Bắt đầu</button>
-    <div id="countdown" style="display: none;"></div>
-    <div id="score">Điểm: 0</div>
-    <div id="gameOver" style="display: none;">Game Over! Nhấn Space để chơi lại.</div>
-    <canvas id="gameCanvas" width="800" height="200"></canvas>
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const startButton = document.getElementById('startButton');
-        const scoreDiv = document.getElementById('score');
-        const gameOverDiv = document.getElementById('gameOver');
-        const countdownDiv = document.getElementById('countdown');
+<h2>Game Khủng Long Cổ Điển</h2>
+<button id="startButton">Bắt đầu</button>
+<div id="countdown"></div>
+<div id="score">Điểm: 0</div>
+<div id="gameOver">Game Over! Nhấn Space để chơi lại</div>
 
-        let dino = { x: 50, y: 150, width: 40, height: 40, dy: 0, jumping: false, ducked: false };
-        let obstacles = [];
-        let score = 0;
-        let gameRunning = false;
-        let gameOver = false;
-        let obstacleSpeed = 5;
-        let maxSpeed = 10; // Tốc độ tối đa
-        let speedIncreaseCounter = 0; // Bộ đếm để tăng tốc độ
-        let gravity = 0.6;
-        let jumpStrength = -12;
-        let lastCactusX = -1000; // Vị trí x của cây xương rồng cuối cùng
-        let birdSpawnTimer = 0; // Bộ đếm thời gian để spawn chim
-        let nextBirdSpawn = 300 + Math.random() * 180; // Thời gian spawn chim tiếp theo (300-480 frame, khoảng 5-8 giây ở 60fps)
+<canvas id="gameCanvas" width="800" height="200"></canvas>
 
-        // Vẽ khủng long
-        function drawDino() {
-            ctx.fillStyle = 'green';
-            let drawHeight = dino.height;
-            let drawY = dino.y;
-            if (dino.ducked) {
-                drawHeight = 20; // Giảm chiều cao khi cúi
-                drawY = dino.y + 20;
-            }
-            ctx.fillRect(dino.x, drawY, dino.width, drawHeight);
-        }
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-        // Vẽ chướng ngại vật
-        function drawObstacles() {
-            obstacles.forEach(obstacle => {
-                if (obstacle.type === 'cactus') {
-                    ctx.fillStyle = 'red';
-                    ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-                } else if (obstacle.type === 'bird') {
-                    ctx.fillStyle = 'blue';
-                    ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-                }
-            });
-        }
+const startButton = document.getElementById("startButton");
+const scoreDiv = document.getElementById("score");
+const countdownDiv = document.getElementById("countdown");
+const gameOverDiv = document.getElementById("gameOver");
 
-        // Cập nhật vị trí khủng long
-        function updateDino() {
-            if (dino.jumping) {
-                dino.dy += gravity;
-                dino.y += dino.dy;
-                if (dino.y >= 150) {
-                    dino.y = 150;
-                    dino.dy = 0;
-                    dino.jumping = false;
-                }
-            }
-        }
+// ===== DINO =====
+let dino = {
+    x: 50,
+    y: 150,
+    width: 40,
+    height: 40,
+    dy: 0,
+    jumping: false,
+    ducked: false
+};
 
-        // Cập nhật chướng ngại vật
-        function updateObstacles() {
-            obstacles.forEach(obstacle => {
-                obstacle.x -= obstacleSpeed;
-            });
-            obstacles = obstacles.filter(obstacle => obstacle.x > -obstacle.width);
+// ===== GAME VARS =====
+let obstacles = [];
+let score = 0;
+let gameRunning = false;
+let gameOver = false;
 
-            // Thêm chướng ngại vật mới
-            let canSpawn = false;
-            let type = 'cactus'; // Mặc định là cactus
-            if (obstacles.length === 0) {
-                canSpawn = true;
-            } else {
-                let lastObstacle = obstacles[obstacles.length - 1];
-                let minDistance = 150; // Khoảng cách tối thiểu chung
-                if (lastObstacle.x < canvas.width - minDistance) {
-                    canSpawn = true;
-                }
-            }
+let gravity = 0.6;
+let jumpStrength = -12;
 
-            if (canSpawn) {
-                let newObstacle;
-                // Spawn cactus với khoảng cách ngẫu nhiên ngắn hơn để tăng số lượng
-                let cactusMinDistance = 150 + Math.random() * 200; // Ngẫu nhiên từ 150-350 pixel (giảm so với trước)
-                if (canvas.width - lastCactusX >= cactusMinDistance) {
-                    newObstacle = { x: canvas.width, y: 150, width: 20, height: 40, type: 'cactus' };
-                    lastCactusX = canvas.width;
-                }
-                // Spawn chim nếu đủ điều kiện
-                birdSpawnTimer++;
-                if (birdSpawnTimer >= nextBirdSpawn && Math.floor(score / 10) >= 1000) { // Chim chỉ xuất hiện khi điểm >= 1000
-                    newObstacle = { x: canvas.width, y: 140 + Math.random() * 30, width: 30, height: 20, type: 'bird' };
-                    birdSpawnTimer = 0;
-                    nextBirdSpawn = 300 + Math.random() * 180; // Reset timer cho chim tiếp theo
-                }
-                if (newObstacle) {
-                    obstacles.push(newObstacle);
-                }
-            }
-        }
+let obstacleSpeed = 5;
+let maxSpeed = 10;
+let speedCounter = 0;
 
-        // Kiểm tra va chạm
-        function checkCollision() {
-            obstacles.forEach(obstacle => {
-                let dinoHeight = dino.ducked ? 20 : dino.height;
-                let dinoY = dino.ducked ? dino.y + 20 : dino.y;
-                if (dino.x < obstacle.x + obstacle.width &&
-                    dino.x + dino.width > obstacle.x &&
-                    dinoY < obstacle.y + obstacle.height &&
-                    dinoY + dinoHeight > obstacle.y) {
-                    gameOver = true;
-                    gameRunning = false;
-                    gameOverDiv.style.display = 'block';
-                }
-            });
-        }
+// Delay cactus 3s
+let cactusDelayCounter = 0;
+const CACTUS_DELAY = 180; // 3 giây (60fps)
 
-        // Vẽ nền
-        function drawGround() {
-            ctx.fillStyle = 'black';
-            ctx.fillRect(0, 190, canvas.width, 10);
-        }
+// Random distance
+let nextCactusDistance = randomCactusDistance();
 
-        // Game loop
-        function gameLoop() {
-            if (!gameRunning) return;
+// ===== RANDOM DISTANCE =====
+function randomCactusDistance() {
+    return 150 + Math.random() * 200; // 150 - 350px
+}
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawGround();
-            drawDino();
-            drawObstacles();
-            updateDino();
-            updateObstacles();
-            checkCollision();
-            score++;
-            scoreDiv.textContent = `Điểm: ${Math.floor(score / 10)}`;
+// ===== DRAW =====
+function drawDino() {
+    ctx.fillStyle = "green";
+    let h = dino.ducked ? 20 : dino.height;
+    let y = dino.ducked ? dino.y + 20 : dino.y;
+    ctx.fillRect(dino.x, y, dino.width, h);
+}
 
-            // Tăng tốc độ dần dần
-            speedIncreaseCounter++;
-            if (speedIncreaseCounter >= 60 && obstacleSpeed < maxSpeed) { // Mỗi 60 frame (khoảng 1 giây ở 60fps), tăng tốc nếu chưa đạt max
-                obstacleSpeed += 0.1;
-                speedIncreaseCounter = 0;
-            }
+function drawObstacles() {
+    ctx.fillStyle = "red";
+    obstacles.forEach(o => {
+        ctx.fillRect(o.x, o.y, o.width, o.height);
+    });
+}
 
-            requestAnimationFrame(gameLoop);
-        }
+function drawGround() {
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 190, canvas.width, 10);
+}
 
-        // Đếm ngược
-        function startCountdown() {
-            let count = 3;
-            countdownDiv.style.display = 'block';
-            countdownDiv.textContent = count;
-            const interval = setInterval(() => {
-                count--;
-                if (count > 0) {
-                    countdownDiv.textContent = count;
-                } else {
-                    clearInterval(interval);
-                    countdownDiv.style.display = 'none';
-                    gameRunning = true;
-                    gameLoop();
-                }
-            }, 1000);
-        }
-
-        // Bắt đầu game
-        startButton.addEventListener('click', () => {
-            startButton.style.display = 'none';
-            gameOverDiv.style.display = 'none';
+// ===== UPDATE =====
+function updateDino() {
+    if (dino.jumping) {
+        dino.dy += gravity;
+        dino.y += dino.dy;
+        if (dino.y >= 150) {
             dino.y = 150;
             dino.dy = 0;
             dino.jumping = false;
-            dino.ducked = false;
-            obstacles = [];
-            score = 0;
-            gameOver = false;
-            obstacleSpeed = 5; // Reset tốc độ
-            speedIncreaseCounter = 0; // Reset bộ đếm
-            lastCactusX = -1000; // Reset vị trí xương rồng
-            birdSpawnTimer = 0; // Reset timer chim
-            nextBirdSpawn = 300 + Math.random() * 180; // Reset timer chim
-            startCountdown();
-        });
+        }
+    }
+}
 
-        // Sự kiện nhấn phím
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') {
-                e.preventDefault();
-                if (gameRunning && !dino.jumping && !dino.ducked) {
-                    // Nhảy nếu game đang chạy
-                    dino.jumping = true;
-                    dino.dy = jumpStrength;
-                } else if (gameOver) {
-                    // Chơi lại
-                    startButton.style.display = 'none';
-                    gameOverDiv.style.display = 'none';
-                    dino.y = 150;
-                    dino.dy = 0;
-                    dino.jumping = false;
-                    dino.ducked = false;
-                    obstacles = [];
-                    score = 0;
-                    gameOver = false;
-                    obstacleSpeed = 5; // Reset tốc độ
-                    speedIncreaseCounter = 0; // Reset bộ đếm
-                    lastCactusX = -1000; // Reset vị trí xương rồng
-                    birdSpawnTimer = 0; // Reset timer chim
-                    nextBirdSpawn = 300 + Math.random() * 180; // Reset timer chim
-                    startCountdown();
-                }
-            } else if (e.code === 'ArrowDown') {
-                e.preventDefault();
-                if (gameRunning && !dino.jumping) {
-                    dino.ducked = true;
-                }
-            }
-        });
+function spawnCactus() {
+    obstacles.push({
+        x: canvas.width,
+        y: 150,
+        width: 20,
+        height: 40
+    });
+    nextCactusDistance = randomCactusDistance();
+}
 
-        document.addEventListener('keyup', (e) => {
-            if (e.code === 'ArrowDown') {
-                dino.ducked = false;
-            }
-        });
-    </script>
+function updateObstacles() {
+    cactusDelayCounter++;
+
+    obstacles.forEach(o => o.x -= obstacleSpeed);
+    obstacles = obstacles.filter(o => o.x > -o.width);
+
+    if (cactusDelayCounter < CACTUS_DELAY) return;
+
+    if (obstacles.length === 0) {
+        spawnCactus();
+    } else {
+        let last = obstacles[obstacles.length - 1];
+        if (canvas.width - last.x >= nextCactusDistance) {
+            spawnCactus();
+        }
+    }
+}
+
+function checkCollision() {
+    obstacles.forEach(o => {
+        let h = dino.ducked ? 20 : dino.height;
+        let y = dino.ducked ? dino.y + 20 : dino.y;
+
+        if (
+            dino.x < o.x + o.width &&
+            dino.x + dino.width > o.x &&
+            y < o.y + o.height &&
+            y + h > o.y
+        ) {
+            gameOver = true;
+            gameRunning = false;
+            gameOverDiv.style.display = "block";
+        }
+    });
+}
+
+// ===== GAME LOOP =====
+function gameLoop() {
+    if (!gameRunning) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    drawGround();
+    drawDino();
+    drawObstacles();
+
+    updateDino();
+    updateObstacles();
+    checkCollision();
+
+    score++;
+    scoreDiv.textContent = "Điểm: " + Math.floor(score / 10);
+
+    speedCounter++;
+    if (speedCounter >= 60 && obstacleSpeed < maxSpeed) {
+        obstacleSpeed += 0.1;
+        speedCounter = 0;
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+
+// ===== COUNTDOWN =====
+function startCountdown() {
+    let count = 3;
+    countdownDiv.style.display = "block";
+    countdownDiv.textContent = count;
+
+    const timer = setInterval(() => {
+        count--;
+        if (count > 0) {
+            countdownDiv.textContent = count;
+        } else {
+            clearInterval(timer);
+            countdownDiv.style.display = "none";
+            gameRunning = true;
+            gameLoop();
+        }
+    }, 1000);
+}
+
+// ===== RESET =====
+function resetGame() {
+    obstacles = [];
+    score = 0;
+    obstacleSpeed = 5;
+    speedCounter = 0;
+    cactusDelayCounter = 0;
+    nextCactusDistance = randomCactusDistance();
+
+    dino.y = 150;
+    dino.dy = 0;
+    dino.jumping = false;
+    dino.ducked = false;
+
+    gameOver = false;
+    gameOverDiv.style.display = "none";
+
+    startCountdown();
+}
+
+// ===== EVENTS =====
+startButton.addEventListener("click", () => {
+    startButton.style.display = "none";
+    resetGame();
+});
+
+document.addEventListener("keydown", e => {
+    if (e.code === "Space") {
+        e.preventDefault();
+        if (gameRunning && !dino.jumping && !dino.ducked) {
+            dino.jumping = true;
+            dino.dy = jumpStrength;
+        } else if (gameOver) {
+            resetGame();
+        }
+    }
+
+    if (e.code === "ArrowDown" && gameRunning && !dino.jumping) {
+        dino.ducked = true;
+    }
+});
+
+document.addEventListener("keyup", e => {
+    if (e.code === "ArrowDown") {
+        dino.ducked = false;
+    }
+});
+</script>
+
 </body>
 </html>
