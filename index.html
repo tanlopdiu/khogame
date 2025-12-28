@@ -63,9 +63,10 @@
         let gameRunning = false;
         let gameOver = false;
         let obstacleSpeed = 5;
+        let maxSpeed = 10; // Tốc độ tối đa
+        let speedIncreaseCounter = 0; // Bộ đếm để tăng tốc độ
         let gravity = 0.6;
         let jumpStrength = -12;
-        let lastObstacleX = canvas.width; // Vị trí x của chướng ngại vật cuối cùng
 
         // Vẽ khủng long
         function drawDino() {
@@ -112,19 +113,18 @@
             });
             obstacles = obstacles.filter(obstacle => obstacle.x > -obstacle.width);
 
-            // Thêm chướng ngại vật mới với khoảng cách tối thiểu
-            if (lastObstacleX <= canvas.width - 250) { // Khoảng cách tối thiểu 250px để có thể nhảy qua
+            // Thêm chướng ngại vật mới với khoảng cách ngẫu nhiên
+            let minDistance = 200 + Math.random() * 200; // Khoảng cách ngẫu nhiên từ 200-400 pixel
+            if (obstacles.length === 0 || obstacles[obstacles.length - 1].x < canvas.width - minDistance) {
                 let type = Math.random() < 0.7 ? 'cactus' : 'bird'; // 70% cactus, 30% bird
                 let newObstacle;
                 if (type === 'cactus') {
                     newObstacle = { x: canvas.width, y: 150, width: 20, height: 40, type: 'cactus' };
                 } else {
-                    newObstacle = { x: canvas.width, y: 100 + Math.random() * 30, width: 30, height: 20, type: 'bird' }; // Chim bay ở độ cao 100-130
+                    newObstacle = { x: canvas.width, y: 120 + Math.random() * 30, width: 30, height: 20, type: 'bird' }; // Chim bay ở độ cao 120-150 để buộc cúi đầu
                 }
                 obstacles.push(newObstacle);
-                lastObstacleX = canvas.width;
             }
-            lastObstacleX -= obstacleSpeed;
         }
 
         // Kiểm tra va chạm
@@ -163,6 +163,13 @@
             score++;
             scoreDiv.textContent = `Điểm: ${Math.floor(score / 10)}`;
 
+            // Tăng tốc độ dần dần
+            speedIncreaseCounter++;
+            if (speedIncreaseCounter >= 60 && obstacleSpeed < maxSpeed) { // Mỗi 60 frame (khoảng 1 giây ở 60fps), tăng tốc nếu chưa đạt max
+                obstacleSpeed += 0.1;
+                speedIncreaseCounter = 0;
+            }
+
             requestAnimationFrame(gameLoop);
         }
 
@@ -195,7 +202,8 @@
             obstacles = [];
             score = 0;
             gameOver = false;
-            lastObstacleX = canvas.width;
+            obstacleSpeed = 5; // Reset tốc độ
+            speedIncreaseCounter = 0; // Reset bộ đếm
             startCountdown();
         });
 
@@ -218,7 +226,8 @@
                     obstacles = [];
                     score = 0;
                     gameOver = false;
-                    lastObstacleX = canvas.width;
+                    obstacleSpeed = 5; // Reset tốc độ
+                    speedIncreaseCounter = 0; // Reset bộ đếm
                     startCountdown();
                 }
             } else if (e.code === 'ArrowDown') {
