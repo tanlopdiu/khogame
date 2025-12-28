@@ -5,42 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game Khủng Long</title>
     <style>
-        body {
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: #f0f0f0;
-            font-family: Arial, sans-serif;
-        }
-        canvas {
-            background: white;
-            border: 2px solid black;
-        }
-        #startButton {
-            padding: 10px 20px;
-            font-size: 18px;
-            margin-bottom: 10px;
-            cursor: pointer;
-        }
-        #score {
-            font-size: 22px;
-            margin: 5px;
-        }
-        #countdown {
-            font-size: 48px;
-            color: blue;
-            margin: 10px;
-            display: none;
-        }
-        #gameOver {
-            font-size: 24px;
-            color: red;
-            margin: 10px;
-            display: none;
-        }
+        body { margin:0; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#f0f0f0; font-family:Arial,sans-serif;}
+        canvas { background:white; border:2px solid black;}
+        #startButton { padding:10px 20px; font-size:18px; margin-bottom:10px; cursor:pointer;}
+        #score { font-size:22px; margin:5px;}
+        #countdown { font-size:48px; color:blue; margin:10px; display:none;}
+        #gameOver { font-size:24px; color:red; margin:10px; display:none;}
     </style>
 </head>
 <body>
@@ -63,7 +33,7 @@ const countdownDiv = document.getElementById("countdown");
 const gameOverDiv = document.getElementById("gameOver");
 
 // ===== DINO =====
-let dino = { x: 50, y: 150, width: 40, height: 40, dy: 0, jumping: false, ducked: false };
+let dino = { x:50, y:150, width:40, height:40, dy:0, jumping:false, ducked:false };
 
 // ===== GAME VARS =====
 let obstacles = [];
@@ -91,7 +61,7 @@ const SAFE_MIN_DISTANCE = 220;
 const SAFE_MAX_DISTANCE = 400;
 
 function randomSafeDistance() {
-    return SAFE_MIN_DISTANCE + Math.random() * (SAFE_MAX_DISTANCE - SAFE_MIN_DISTANCE);
+    return SAFE_MIN_DISTANCE + Math.random()*(SAFE_MAX_DISTANCE-SAFE_MIN_DISTANCE);
 }
 
 let nextCactusDistance = randomSafeDistance();
@@ -100,83 +70,88 @@ let nextCactusDistance = randomSafeDistance();
 function drawDino() {
     ctx.fillStyle = "green";
     let h = dino.ducked ? 20 : dino.height;
-    let y = dino.ducked ? dino.y + 20 : dino.y;
+    let y = dino.ducked ? dino.y+20 : dino.y;
     ctx.fillRect(dino.x, y, dino.width, h);
 }
 
 function drawObstacles() {
     obstacles.forEach(o => {
-        ctx.fillStyle = o.type === "cactus" ? "red" : "blue";
+        ctx.fillStyle = o.type==="cactus"?"red":"blue";
         ctx.fillRect(o.x, o.y, o.width, o.height);
     });
 }
 
 function drawGround() {
-    ctx.fillStyle = "black";
-    ctx.fillRect(0, 190, canvas.width, 10);
+    ctx.fillStyle="black";
+    ctx.fillRect(0,190,canvas.width,10);
 }
 
 // ===== UPDATE =====
 function updateDino() {
-    if (dino.jumping) {
+    if(dino.jumping){
         dino.dy += gravity;
         dino.y += dino.dy;
-        if (dino.y >= 150) { dino.y = 150; dino.dy = 0; dino.jumping = false; }
+        if(dino.y>=150){ dino.y=150; dino.dy=0; dino.jumping=false; }
     }
 }
 
 function spawnCactus() {
-    obstacles.push({ type: "cactus", x: canvas.width, y: 150, width: 20, height: 40 });
+    obstacles.push({type:"cactus", x:canvas.width, y:150, width:20, height:40});
     // combo 2 cây
-    if (Math.random() < 0.25) obstacles.push({ type: "cactus", x: canvas.width + 35, y: 150, width: 20, height: 40 });
+    if(Math.random()<0.25) obstacles.push({type:"cactus", x:canvas.width+35, y:150, width:20, height:40});
     nextCactusDistance = randomSafeDistance();
 }
 
 function spawnBird() {
+    // Kiểm tra khoảng cách an toàn với cactus gần nhất
     let safe = true;
-    obstacles.forEach(o => {
-        if (o.type === "cactus" && (canvas.width + 30) - o.x < 80) safe = false; // cách đủ an toàn
+    obstacles.forEach(o=>{
+        if(o.type==="cactus"){
+            if(Math.abs((canvas.width) - o.x) < SAFE_MIN_DISTANCE){
+                safe=false;
+            }
+        }
     });
-    if (!safe) return;
-    obstacles.push({ type: "bird", x: canvas.width, y: 120 + Math.random()*30, width: 30, height: 20 });
+    if(!safe) return;
+    obstacles.push({type:"bird", x:canvas.width, y:120+Math.random()*30, width:30, height:20});
 }
 
-function updateObstacles() {
+function updateObstacles(){
     cactusDelayCounter++;
-    obstacles.forEach(o => o.x -= obstacleSpeed);
-    obstacles = obstacles.filter(o => o.x > -o.width);
+    obstacles.forEach(o=>o.x-=obstacleSpeed);
+    obstacles = obstacles.filter(o=>o.x>-o.width);
 
-    if (cactusDelayCounter < CACTUS_DELAY) return;
+    if(cactusDelayCounter<CACTUS_DELAY) return;
 
     // Cactus
-    if (obstacles.length === 0) { spawnCactus(); } 
-    else {
+    if(obstacles.length===0){ spawnCactus(); }
+    else{
         let last = obstacles[obstacles.length-1];
-        if (canvas.width - last.x >= nextCactusDistance) spawnCactus();
+        if(canvas.width - last.x >= nextCactusDistance) spawnCactus();
     }
 
     // Bird (3500 -> 4000+, xuất hiện thưa)
-    if (score >= 3500) {
-        let birdChance = score < 4000 ? 0.001 : 0.002; // giảm 5 lần so với trước
-        if (Math.random() < birdChance) spawnBird();
+    if(score>=3500){
+        let birdChance = score<4000 ? 0.001 : 0.002; // giảm 5 lần
+        if(Math.random()<birdChance) spawnBird();
     }
 }
 
-function checkCollision() {
-    obstacles.forEach(o => {
-        let h = dino.ducked ? 20 : dino.height;
-        let y = dino.ducked ? dino.y + 20 : dino.y;
-        if (dino.x < o.x+o.width && dino.x+dino.width > o.x && y < o.y+o.height && y+h > o.y) {
-            gameOver = true;
-            gameRunning = false;
-            gameOverDiv.style.display = "block";
+function checkCollision(){
+    obstacles.forEach(o=>{
+        let h = dino.ducked?20:dino.height;
+        let y = dino.ducked?dino.y+20:dino.y;
+        if(dino.x<o.x+o.width && dino.x+dino.width>o.x && y<o.y+o.height && y+h>o.y){
+            gameOver=true;
+            gameRunning=false;
+            gameOverDiv.style.display="block";
         }
     });
 }
 
 // ===== GAME LOOP =====
-function gameLoop() {
-    if (!gameRunning) return;
+function gameLoop(){
+    if(!gameRunning) return;
 
     ctx.clearRect(0,0,canvas.width,canvas.height);
     drawGround();
@@ -186,15 +161,15 @@ function gameLoop() {
     updateObstacles();
     checkCollision();
 
-    score += 1.5;
-    scoreDiv.textContent = "Điểm: " + Math.floor(score);
+    score+=1.5;
+    scoreDiv.textContent="Điểm: "+Math.floor(score);
 
     // Tăng tốc chậm, dừng sau 7000 điểm
-    if (score < 7000) {
+    if(score<7000){
         speedCounter++;
-        if (speedCounter >= SPEED_UP_INTERVAL && obstacleSpeed < maxSpeed) {
-            obstacleSpeed += SPEED_UP_AMOUNT;
-            speedCounter = 0;
+        if(speedCounter>=SPEED_UP_INTERVAL && obstacleSpeed<maxSpeed){
+            obstacleSpeed+=SPEED_UP_AMOUNT;
+            speedCounter=0;
         }
     }
 
@@ -202,32 +177,32 @@ function gameLoop() {
 }
 
 // ===== COUNTDOWN =====
-function startCountdown() {
-    let count = 3;
-    countdownDiv.style.display = "block";
-    countdownDiv.textContent = count;
-    const timer = setInterval(()=>{
+function startCountdown(){
+    let count=3;
+    countdownDiv.style.display="block";
+    countdownDiv.textContent=count;
+    const timer=setInterval(()=>{
         count--;
-        if (count>0) countdownDiv.textContent = count;
-        else {
+        if(count>0) countdownDiv.textContent=count;
+        else{
             clearInterval(timer);
-            countdownDiv.style.display = "none";
-            gameRunning = true;
+            countdownDiv.style.display="none";
+            gameRunning=true;
             gameLoop();
         }
     },1000);
 }
 
 // ===== RESET =====
-function resetGame() {
-    obstacles = [];
-    score = 0;
-    obstacleSpeed = 5;
-    speedCounter = 0;
-    cactusDelayCounter = 0;
-    nextCactusDistance = randomSafeDistance();
+function resetGame(){
+    obstacles=[];
+    score=0;
+    obstacleSpeed=5;
+    speedCounter=0;
+    cactusDelayCounter=0;
+    nextCactusDistance=randomSafeDistance();
 
-    dino.y = 150; dino.dy=0; dino.jumping=false; dino.ducked=false;
+    dino.y=150; dino.dy=0; dino.jumping=false; dino.ducked=false;
 
     gameOver=false;
     gameOverDiv.style.display="none";
@@ -244,7 +219,7 @@ startButton.addEventListener("click", ()=>{
 document.addEventListener("keydown", e=>{
     if(e.code==="Space"){
         e.preventDefault();
-        if(gameRunning && !dino.jumping && !dino.ducked){ dino.jumping=true; dino.dy=jumpStrength; }
+        if(gameRunning && !dino.jumping && !dino.ducked){ dino.jumping=true; dino.dy= -14; }
         else if(gameOver){ resetGame(); }
     }
     if(e.code==="ArrowDown" && gameRunning && !dino.jumping){ dino.ducked=true; }
