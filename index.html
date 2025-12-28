@@ -178,12 +178,10 @@
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
-                if (!gameRunning && !gameOver) {
+                if (gameRunning && !dino.jumping) {
                     // Nhảy nếu game đang chạy
-                    if (!dino.jumping) {
-                        dino.jumping = true;
-                        dino.dy = jumpStrength;
-                    }
+                    dino.jumping = true;
+                    dino.dy = jumpStrength;
                 } else if (gameOver) {
                     // Chơi lại
                     startButton.style.display = 'none';
