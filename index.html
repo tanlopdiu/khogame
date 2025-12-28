@@ -6,7 +6,7 @@
     <title>Game Khủng Long</title>
     <style>
         body { margin:0; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#f0f0f0; font-family:Arial,sans-serif;}
-        canvas { background:white; border:2px solid black;}
+        canvas { border:2px solid black; background:#fff;}
         #startButton { padding:10px 20px; font-size:18px; margin-bottom:10px; cursor:pointer;}
         #score { font-size:22px; margin:5px;}
         #countdown { font-size:48px; color:blue; margin:10px; display:none;}
@@ -31,6 +31,11 @@ const startButton = document.getElementById("startButton");
 const scoreDiv = document.getElementById("score");
 const countdownDiv = document.getElementById("countdown");
 const gameOverDiv = document.getElementById("gameOver");
+
+// ===== BACKGROUND =====
+const backgroundImg = new Image();
+backgroundImg.src = "anhnen.jpg"; // ảnh nền
+let bgX = 0;
 
 // ===== DINO =====
 let dino = { x:50, y:150, width:40, height:40, dy:0, jumping:false, ducked:false };
@@ -67,10 +72,17 @@ function randomSafeDistance() {
 let nextCactusDistance = randomSafeDistance();
 
 // ===== DRAW =====
+function drawBackground(){
+    ctx.drawImage(backgroundImg, -bgX, 0, canvas.width, canvas.height);
+    ctx.drawImage(backgroundImg, canvas.width - bgX, 0, canvas.width, canvas.height);
+    bgX += 1; // tốc độ di chuyển của background
+    if(bgX >= canvas.width) bgX = 0;
+}
+
 function drawDino() {
     ctx.fillStyle = "green";
     let h = dino.ducked ? 20 : dino.height;
-    let y = dino.ducked ? dino.y+20 : dino.y;
+    let y = dino.ducked ? dino.y + 20 : dino.y;
     ctx.fillRect(dino.x, y, dino.width, h);
 }
 
@@ -153,7 +165,7 @@ function checkCollision(){
 function gameLoop(){
     if(!gameRunning) return;
 
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawBackground(); // background
     drawGround();
     drawDino();
     drawObstacles();
@@ -219,7 +231,7 @@ startButton.addEventListener("click", ()=>{
 document.addEventListener("keydown", e=>{
     if(e.code==="Space"){
         e.preventDefault();
-        if(gameRunning && !dino.jumping && !dino.ducked){ dino.jumping=true; dino.dy= -14; }
+        if(gameRunning && !dino.jumping && !dino.ducked){ dino.jumping=true; dino.dy= jumpStrength; }
         else if(gameOver){ resetGame(); }
     }
     if(e.code==="ArrowDown" && gameRunning && !dino.jumping){ dino.ducked=true; }
