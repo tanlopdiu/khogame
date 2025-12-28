@@ -131,8 +131,8 @@
 
             if (canSpawn) {
                 let newObstacle;
-                // Spawn cactus với khoảng cách ngẫu nhiên
-                let cactusMinDistance = 200 + Math.random() * 300; // Ngẫu nhiên từ 200-500 pixel
+                // Spawn cactus với khoảng cách ngẫu nhiên ngắn hơn để tăng số lượng
+                let cactusMinDistance = 150 + Math.random() * 200; // Ngẫu nhiên từ 150-350 pixel (giảm so với trước)
                 if (canvas.width - lastCactusX >= cactusMinDistance) {
                     newObstacle = { x: canvas.width, y: 150, width: 20, height: 40, type: 'cactus' };
                     lastCactusX = canvas.width;
