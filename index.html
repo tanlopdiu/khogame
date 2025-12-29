@@ -4,51 +4,37 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ĐỒ ÁN TỐT NGHIỆP SỚM CỦA ANH CU TÂN</title>
+
 <style>
-body {
-    margin: 0;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-family: Arial, sans-serif;
-    background: url('anhnen.jpg') no-repeat center center;
-    background-size: cover;
+body{
+    margin:0;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    font-family:Arial,sans-serif;
+    background:url('anhnen.jpg') no-repeat center center;
+    background-size:cover;
 }
-canvas {
-    border: 2px solid black;
+canvas{ border:2px solid black; }
+#startButton{
+    padding:10px 20px;
+    font-size:18px;
+    cursor:pointer;
 }
-#startButton {
-    padding: 10px 20px;
-    font-size: 18px;
-    margin-bottom: 10px;
-    cursor: pointer;
-}
-#score {
-    font-size: 22px;
-    margin: 5px;
-}
-#countdown {
-    font-size: 48px;
-    color: blue;
-    margin: 10px;
-    display: none;
-}
-#gameOver {
-    font-size: 24px;
-    color: red;
-    margin: 10px;
-    display: none;
-}
+#score{ font-size:22px; margin:5px; }
+#countdown{ font-size:48px; color:blue; display:none; }
+#gameOver{ font-size:24px; color:red; display:none; }
 </style>
 </head>
+
 <body>
 
-<h2 style="color: darkblue;">ĐỒ ÁN TỐT NGHIỆP SỚM CỦA ANH CU TÂN</h2>
+<h2 style="color:darkblue;">ĐỒ ÁN TỐT NGHIỆP SỚM CỦA ANH CU TÂN</h2>
 <button id="startButton">Bắt đầu</button>
 <div id="countdown"></div>
-<div id="score">Điểm: 0</div>
+<div id="score">Điểm: 0 | Kỉ lục: 0</div>
 <div id="gameOver">Game Over! Nhấn Space để chơi lại</div>
 
 <canvas id="gameCanvas" width="1200" height="300"></canvas>
@@ -63,116 +49,85 @@ const countdownDiv = document.getElementById("countdown");
 const gameOverDiv = document.getElementById("gameOver");
 
 // ===== IMAGES =====
-const groundImg = new Image();
-groundImg.src = "dat.jpg";
+const groundImg = new Image(); groundImg.src="dat.jpg";
+const dinoImg = new Image(); dinoImg.src="khunglong.jpg";
+const cactusImg = new Image(); cactusImg.src="xuongrong.jpg";
+const birdImg = new Image(); birdImg.src="chim.jpg";
 
-const dinoImg = new Image();
-dinoImg.src = "khunglong.jpg";
-
-const cactusImg = new Image();
-cactusImg.src = "xuongrong.jpg";
-
-const birdImg = new Image();
-birdImg.src = "chim.jpg";
+// ===== SOUNDS =====
+const jumpSound = new Audio("jump.mp3");
+const gameOverSound = new Audio("gameover.mp3");
+const newRecordSound = new Audio("newrecord.mp3");
 
 // ===== VARIABLES =====
-let bgX = 0;
-let dino = { x:50, y:220, width:40, height:40, dy:0, jumping:false, ducked:false };
-let obstacles = [];
-let score = 0;
-let gameRunning = false;
-let gameOver = false;
+let bgX=0;
+let dino={x:50,y:220,width:40,height:40,dy:0,jumping:false,ducked:false};
+let obstacles=[];
+let score=0;
+let gameRunning=false;
+let gameOver=false;
 
-let gravity = 0.8;
-let jumpStrength = -14;
+let gravity=0.8;
+let jumpStrength=-14;
+let obstacleSpeed=5;
 
-let obstacleSpeed = 5;
-let maxSpeed = 11;
-let speedCounter = 0;
-const SPEED_UP_INTERVAL = 90;
-const SPEED_UP_AMOUNT = 0.07;
-
-let cactusDelayCounter = 0;
-const CACTUS_DELAY = 180;
-
-const SAFE_MIN_DISTANCE = 220;
-const SAFE_MAX_DISTANCE = 400;
-function randomSafeDistance(){ return SAFE_MIN_DISTANCE + Math.random()*(SAFE_MAX_DISTANCE-SAFE_MIN_DISTANCE); }
-let nextCactusDistance = randomSafeDistance();
+let highScore = localStorage.getItem("highScore") || 0;
+let recordPlayed = false;
 
 // ===== DRAW =====
 function drawBackground(){
-    ctx.drawImage(groundImg, -bgX, 0, canvas.width, canvas.height);
-    ctx.drawImage(groundImg, canvas.width - bgX, 0, canvas.width, canvas.height);
-    bgX += 1;
-    if(bgX >= canvas.width) bgX = 0;
+    ctx.drawImage(groundImg,-bgX,0,canvas.width,canvas.height);
+    ctx.drawImage(groundImg,canvas.width-bgX,0,canvas.width,canvas.height);
+    bgX+=1;
+    if(bgX>=canvas.width) bgX=0;
 }
-
 function drawDino(){
-    let h = dino.ducked?20:dino.height;
-    let y = dino.ducked?dino.y+20:dino.y;
-    ctx.drawImage(dinoImg, dino.x, y, dino.width*1.5, h*1.5);
+    ctx.drawImage(dinoImg,dino.x,dino.y,dino.width*1.5,dino.height*1.5);
 }
-
 function drawObstacles(){
     obstacles.forEach(o=>{
-        if(o.type==="cactus") 
-            ctx.drawImage(cactusImg, o.x, o.y, o.width*1.5, o.height*1.5);
-        else 
-            ctx.drawImage(birdImg, o.x, o.y, o.width, o.height);
+        if(o.type==="cactus")
+            ctx.drawImage(cactusImg,o.x,o.y,o.width*1.5,o.height*1.5);
+        else
+            ctx.drawImage(birdImg,o.x,o.y,o.width,o.height);
     });
 }
 
 // ===== UPDATE =====
 function updateDino(){
     if(dino.jumping){
-        dino.dy += gravity;
-        dino.y += dino.dy;
-        if(dino.y>=220){ dino.y=220; dino.dy=0; dino.jumping=false; }
+        dino.dy+=gravity;
+        dino.y+=dino.dy;
+        if(dino.y>=220){
+            dino.y=220;
+            dino.dy=0;
+            dino.jumping=false;
+        }
     }
 }
 
 function spawnCactus(){
-    obstacles.push({type:"cactus", x:canvas.width, y:220, width:20, height:40});
-    if(Math.random()<0.25) obstacles.push({type:"cactus", x:canvas.width+35, y:220, width:20, height:40});
-    nextCactusDistance = randomSafeDistance();
-}
-
-function spawnBird(){
-    let safe=true;
-    obstacles.forEach(o=>{
-        if(o.type==="cactus" && Math.abs(canvas.width-o.x)<SAFE_MIN_DISTANCE) safe=false;
-    });
-    if(!safe) return;
-    obstacles.push({type:"bird", x:canvas.width, y:180+Math.random()*30, width:30, height:20});
+    obstacles.push({type:"cactus",x:canvas.width,y:220,width:20,height:40});
 }
 
 function updateObstacles(){
-    cactusDelayCounter++;
     obstacles.forEach(o=>o.x-=obstacleSpeed);
-    obstacles = obstacles.filter(o=>o.x>-o.width);
-
-    if(cactusDelayCounter<CACTUS_DELAY) return;
-
-    if(obstacles.length===0) spawnCactus();
-    else{
-        let last=obstacles[obstacles.length-1];
-        if(canvas.width-last.x>=nextCactusDistance) spawnCactus();
-    }
-
-    if(score>=3500){
-        let birdChance = score<4000?0.001:0.002;
-        if(Math.random()<birdChance) spawnBird();
+    obstacles = obstacles.filter(o=>o.x>-50);
+    if(obstacles.length===0 || canvas.width-obstacles[obstacles.length-1].x>300){
+        spawnCactus();
     }
 }
 
 function checkCollision(){
     obstacles.forEach(o=>{
-        let h = dino.ducked?20:dino.height;
-        let y = dino.ducked?dino.y+20:dino.y;
-        if(dino.x<o.x+o.width && dino.x+dino.width>o.x && y<o.y+o.height && y+h>o.y){
-            gameOver=true;
+        if(dino.x<o.x+o.width &&
+           dino.x+dino.width>o.x &&
+           dino.y<o.y+o.height &&
+           dino.y+dino.height>o.y){
             gameRunning=false;
+            gameOver=true;
+            gameOverSound.currentTime=0;
+            gameOverSound.play();
             gameOverDiv.style.display="block";
         }
     });
@@ -181,6 +136,7 @@ function checkCollision(){
 // ===== GAME LOOP =====
 function gameLoop(){
     if(!gameRunning) return;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
 
     drawBackground();
     drawDino();
@@ -189,30 +145,34 @@ function gameLoop(){
     updateObstacles();
     checkCollision();
 
-    score += 1.5;
-    scoreDiv.textContent="Điểm: "+Math.floor(score);
+    score+=1.5;
 
-    if(score<7000){
-        speedCounter++;
-        if(speedCounter>=SPEED_UP_INTERVAL && obstacleSpeed<maxSpeed){
-            obstacleSpeed += SPEED_UP_AMOUNT;
-            speedCounter=0;
+    if(score>highScore){
+        highScore=Math.floor(score);
+        localStorage.setItem("highScore",highScore);
+        if(!recordPlayed){
+            newRecordSound.currentTime=0;
+            newRecordSound.play();
+            recordPlayed=true;
         }
     }
+
+    scoreDiv.textContent=
+    "Điểm: "+Math.floor(score)+" | Kỉ lục: "+highScore;
 
     requestAnimationFrame(gameLoop);
 }
 
 // ===== COUNTDOWN =====
 function startCountdown(){
-    let count=3;
+    let c=3;
     countdownDiv.style.display="block";
-    countdownDiv.textContent=count;
-    const timer=setInterval(()=>{
-        count--;
-        if(count>0) countdownDiv.textContent=count;
+    countdownDiv.textContent=c;
+    const t=setInterval(()=>{
+        c--;
+        if(c>0) countdownDiv.textContent=c;
         else{
-            clearInterval(timer);
+            clearInterval(t);
             countdownDiv.style.display="none";
             gameRunning=true;
             gameLoop();
@@ -224,37 +184,33 @@ function startCountdown(){
 function resetGame(){
     obstacles=[];
     score=0;
-    obstacleSpeed=5;
-    speedCounter=0;
-    cactusDelayCounter=0;
-    nextCactusDistance=randomSafeDistance();
-
-    dino.y=220; dino.dy=0; dino.jumping=false; dino.ducked=false;
-
+    recordPlayed=false;
+    dino.y=220; dino.dy=0; dino.jumping=false;
     gameOver=false;
     gameOverDiv.style.display="none";
-
     startCountdown();
 }
 
 // ===== EVENTS =====
-startButton.addEventListener("click", ()=>{
+startButton.onclick=()=>{
     startButton.style.display="none";
     resetGame();
-});
+};
 
-document.addEventListener("keydown", e=>{
+document.addEventListener("keydown",e=>{
     if(e.code==="Space"){
         e.preventDefault();
-        if(gameRunning && !dino.jumping && !dino.ducked){ dino.jumping=true; dino.dy= jumpStrength; }
-        else if(gameOver){ resetGame(); }
+        if(gameRunning && !dino.jumping){
+            dino.jumping=true;
+            dino.dy=jumpStrength;
+            jumpSound.currentTime=0;
+            jumpSound.play();
+        }else if(gameOver){
+            resetGame();
+        }
     }
-    if(e.code==="ArrowDown" && gameRunning && !dino.jumping){ dino.ducked=true; }
-});
-
-document.addEventListener("keyup", e=>{
-    if(e.code==="ArrowDown"){ dino.ducked=false; }
 });
 </script>
+
 </body>
 </html>
